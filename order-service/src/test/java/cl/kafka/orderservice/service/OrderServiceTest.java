@@ -5,15 +5,15 @@ import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OrderServiceTest {
 
     @Test
-    void createOrderShouldReturnOrderWithCreatedStatus() {
-        // Arrage: preparar datos
+    void shouldCreateValidOrder() {
+        // Arrange: preparar datos
         OrderService orderService = new OrderService();
 
         CreateOrderRequest request = new CreateOrderRequest(
