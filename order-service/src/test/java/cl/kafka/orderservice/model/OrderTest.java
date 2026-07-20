@@ -15,6 +15,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OrderTest {
 
+    @ParameterizedTest(name = "should reject id: [{0}]")
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = {" ", "   "})
+    void shouldRejectBlackId(String id) {
+        assertThrows(
+                InvalidOrderException.class,
+                () -> new Order(
+                        id,
+                        "customer-123",
+                        "product-123",
+                        1,
+                        new BigDecimal("19990"),
+                        OrderStatus.CREATED
+                )
+        );
+    }
+
     @ParameterizedTest(name = "should reject customerId: [{0}]")
     @NullSource
     @EmptySource
@@ -23,6 +41,7 @@ public class OrderTest {
         assertThrows(
                 InvalidOrderException.class,
                 () -> new Order(
+                        "order-123",
                         customerId,
                         "product-123",
                         1,
@@ -40,6 +59,7 @@ public class OrderTest {
         assertThrows(
                 InvalidOrderException.class,
                 () -> new Order(
+                        "order-123",
                         "customer-123",
                         productId,
                         1,
@@ -55,6 +75,7 @@ public class OrderTest {
         assertThrows(
                 InvalidOrderException.class,
                 () -> new Order(
+                        "order-123",
                         "customer-123",
                         "product-123",
                         quantity,
@@ -69,6 +90,7 @@ public class OrderTest {
         assertThrows(
                 InvalidOrderException.class,
                 () -> new Order(
+                        "order-123",
                         "customer-123",
                         "product-123",
                         1,
@@ -84,6 +106,7 @@ public class OrderTest {
         assertThrows(
                 InvalidOrderException.class,
                 () -> new Order(
+                        "order-123",
                         "customer-123",
                         "product-123",
                         1,
@@ -97,6 +120,7 @@ public class OrderTest {
     void shouldCancelCreatedOrder() {
         // Arrange
         Order order = new Order(
+                "order-123",
                 "customer-123",
                 "product-123",
                 1,
@@ -117,6 +141,7 @@ public class OrderTest {
     void shouldRejectCancellingAlreadyCancelledOrder() {
         // Arrange
         Order order = new Order(
+                "order-123",
                 "customer-123",
                 "product-123",
                 1,
@@ -143,6 +168,7 @@ public class OrderTest {
 
         // Arrange
         Order order = new Order(
+                "order-123",
                 "customer-123",
                 "product-123",
                 1,
@@ -163,6 +189,7 @@ public class OrderTest {
     @Test
     void shouldRejectPayingCancelledOrder() {
         Order order = new Order(
+                "order-123",
                 "customer-123",
                 "product-123",
                 1,

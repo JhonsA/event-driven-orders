@@ -7,13 +7,18 @@ import java.math.BigDecimal;
 
 public class Order {
 
+    private final String id;
     private final String customerId;
     private final String productId;
     private final int quantity;
     private final BigDecimal unitPrice;
     private OrderStatus status;
 
-    public Order(String customerId, String productId, int quantity, BigDecimal unitPrice, OrderStatus status) {
+    public Order(String id, String customerId, String productId, int quantity, BigDecimal unitPrice, OrderStatus status) {
+        if (id == null || id.isBlank()) {
+            throw new InvalidOrderException("ID must not be blank");
+        }
+
         if (customerId == null || customerId.isBlank()) {
             throw new InvalidOrderException("Customer ID must not be blank");
         }
@@ -34,6 +39,7 @@ public class Order {
             throw new InvalidOrderException("Order status must not be null");
         }
 
+        this.id = id;
         this.customerId = customerId;
         this.productId = productId;
         this.quantity = quantity;
@@ -59,6 +65,10 @@ public class Order {
         }
 
         this.status = OrderStatus.PAID;
+    }
+
+    public String id() {
+        return id;
     }
 
     public String customerId() {
