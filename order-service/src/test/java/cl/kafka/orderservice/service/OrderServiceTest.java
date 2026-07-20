@@ -1,20 +1,44 @@
 package cl.kafka.orderservice.service;
 
 import cl.kafka.orderservice.dto.CreateOrderRequest;
+import cl.kafka.orderservice.exception.OrderNotFoundException;
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
+import cl.kafka.orderservice.repository.OrderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 public class OrderServiceTest {
 
+    private OrderRepository orderRepository;
+    private OrderIdGenerator orderIdGenerator;
+    private OrderService orderService;
+
+    @BeforeEach
+    void setUp() {
+        orderRepository = mock(OrderRepository.class);
+        orderIdGenerator = mock(OrderIdGenerator.class);
+
+        when(orderIdGenerator.generate())
+                .thenReturn("order-123");
+
+        orderService = new OrderService(
+                orderRepository,
+                orderIdGenerator
+        );
+    }
+
     @Test
     void shouldCreateValidOrder() {
-        // Arrange: preparar datos
-        OrderService orderService = new OrderService();
+        // Arrange: preparar datos (ahora lo hace el setUp)
 
         CreateOrderRequest request = new CreateOrderRequest(
                 "customer-123",
@@ -32,6 +56,85 @@ public class OrderServiceTest {
         assertEquals("product-456", order.productId());
         assertEquals(2, order.quantity());
         assertEquals(new BigDecimal("19990"), order.unitPrice());
+    }
+
+    @Test
+    void shouldStoreCreatedOrder() {
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-1",
+                "product-1",
+                2,
+                new BigDecimal("19990")
+        );
+
+        Order createdOrder = orderService.createOrder(request);
+
+        verify(orderRepository).save(createdOrder);
+    }
+
+    @Test
+    void shouldCreateOrderWithId() {
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-1",
+                "product-1",
+                2,
+                new BigDecimal("19990")
+        );
+
+        when(orderIdGenerator.generate())
+                .thenReturn("order-1234");
+
+        Order order = orderService.createOrder(request);
+
+        assertEquals("order-1234", order.id());
+
+        verify(orderIdGenerator).generate();
+    }
+
+    @Test
+    void shouldFindOrderById() {
+        // Arrange
+        String orderId = "order-123";
+
+        Order storedOrder = new Order(
+                orderId,
+                "customer-123",
+                "product-123",
+                1,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(storedOrder));
+
+        // Act
+        Order foundOrder = orderService.findById(orderId);
+
+        // Assert
+        assertEquals(storedOrder, foundOrder);
+
+        verify(orderRepository).findById(orderId);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOrderDoesNotExist() {
+        // Arrange
+        String orderId = "order-123";
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.empty());
+
+        // Act + Assert
+        OrderNotFoundException exception = assertThrows(
+                OrderNotFoundException.class,
+                () -> orderService.findById(orderId)
+        );
+
+        assertEquals(
+                "Order with id 'order-123' was not found.",
+                exception.getMessage()
+        );
     }
 
 }
