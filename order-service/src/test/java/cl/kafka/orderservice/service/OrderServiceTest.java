@@ -7,7 +7,7 @@ import cl.kafka.orderservice.model.OrderStatus;
 import cl.kafka.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
+import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -135,6 +135,58 @@ public class OrderServiceTest {
                 "Order with id 'order-123' was not found.",
                 exception.getMessage()
         );
+    }
+
+    @Test
+    void shouldSaveCancelledOrder() {
+        // Arrange
+        String orderId = "order-123";
+
+        Order storedOrder = new Order(
+                orderId,
+                "customer-123",
+                "product-123",
+                1,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(storedOrder));
+
+        ArgumentCaptor<Order> orderCaptor =
+                ArgumentCaptor.forClass(Order.class);
+
+        // Act
+        orderService.cancelOrder(orderId);
+
+        // Assert
+        verify(orderRepository).save(orderCaptor.capture());
+
+        Order savedOrder = orderCaptor.getValue();
+
+        assertEquals(
+                OrderStatus.CANCELLED,
+                savedOrder.status()
+        );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCancellingNonExistingOrder() {
+        // Arrange
+        String orderId = "order-123";
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(
+                OrderNotFoundException.class,
+                () -> orderService.cancelOrder(orderId)
+        );
+
+        verify(orderRepository, never())
+                .save(any(Order.class));
     }
 
 }
