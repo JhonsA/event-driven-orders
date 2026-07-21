@@ -35,4 +35,10 @@ public class OrderService {
         return orderRepository.findById(id).
                 orElseThrow(() -> new OrderNotFoundException(id));
     }
+
+    public void cancelOrder(String id) {
+        Order order = findById(id);
+        order.cancel();
+        orderRepository.save(order);
+    }
 }
