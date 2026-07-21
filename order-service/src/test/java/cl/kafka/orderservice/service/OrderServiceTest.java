@@ -189,4 +189,46 @@ public class OrderServiceTest {
                 .save(any(Order.class));
     }
 
+    @Test
+    void shouldSavePaidOrder() {
+        // Arrange
+        String orderId = "order-123";
+
+        Order storedOrder = new Order(
+                orderId,
+                "customer-123",
+                "product-123",
+                1,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(storedOrder));
+
+        // Act
+        orderService.payOrder(orderId);
+
+        // Assert
+        verify(orderRepository).save(storedOrder);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPayingNonExistingOrder() {
+        // Arrange
+        String orderId = "order-123";
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(
+                OrderNotFoundException.class,
+                () -> orderService.payOrder(orderId)
+        );
+
+        verify(orderRepository, never())
+                .save(any(Order.class));
+    }
+
 }

@@ -41,4 +41,10 @@ public class OrderService {
         order.cancel();
         orderRepository.save(order);
     }
+
+    public void payOrder(String id) {
+        Order order = findById(id);
+        order.pay();
+        orderRepository.save(order);
+    }
 }
