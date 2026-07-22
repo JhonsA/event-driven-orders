@@ -1,13 +1,17 @@
 package cl.kafka.orderservice.service;
 
 import cl.kafka.orderservice.dto.CreateOrderRequest;
+import cl.kafka.orderservice.event.OrderCreatedEvent;
 import cl.kafka.orderservice.exception.OrderNotFoundException;
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
-import cl.kafka.orderservice.repository.OrderRepository;
+import cl.kafka.orderservice.port.out.OrderEventPublisher;
+import cl.kafka.orderservice.port.out.OrderIdGenerator;
+import cl.kafka.orderservice.port.out.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -20,19 +24,23 @@ public class OrderServiceTest {
 
     private OrderRepository orderRepository;
     private OrderIdGenerator orderIdGenerator;
+    private OrderEventPublisher orderEventPublisher;
+
     private OrderService orderService;
 
     @BeforeEach
     void setUp() {
         orderRepository = mock(OrderRepository.class);
         orderIdGenerator = mock(OrderIdGenerator.class);
+        orderEventPublisher = mock(OrderEventPublisher.class);
 
         when(orderIdGenerator.generate())
                 .thenReturn("order-123");
 
         orderService = new OrderService(
                 orderRepository,
-                orderIdGenerator
+                orderIdGenerator,
+                orderEventPublisher
         );
     }
 
@@ -229,6 +237,52 @@ public class OrderServiceTest {
 
         verify(orderRepository, never())
                 .save(any(Order.class));
+    }
+
+    @Test
+    void shouldPublishCreatedOrder() {
+        // Arrange
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-123",
+                "product-456",
+                2,
+                new BigDecimal("19990")
+        );
+
+        ArgumentCaptor<Order> orderCaptor =
+                ArgumentCaptor.forClass(Order.class);
+
+        ArgumentCaptor<OrderCreatedEvent> eventCaptor =
+                ArgumentCaptor.forClass(OrderCreatedEvent.class);
+
+        // Act
+        orderService.createOrder(request);
+
+        // Assert
+        InOrder inOrder = inOrder(
+                orderRepository,
+                orderEventPublisher
+        );
+
+        inOrder.verify(orderRepository)
+                .save(orderCaptor.capture());
+
+        Order savedOrder = orderCaptor.getValue();
+
+        inOrder.verify(orderEventPublisher)
+                .publishOrderCreated(eventCaptor.capture());
+
+        OrderCreatedEvent publishedEvent = eventCaptor.getValue();
+
+        OrderCreatedEvent expectedEvent = new OrderCreatedEvent(
+                savedOrder.id(),
+                savedOrder.customerId(),
+                savedOrder.productId(),
+                savedOrder.quantity(),
+                savedOrder.unitPrice()
+        );
+
+        assertEquals(expectedEvent, publishedEvent);
     }
 
 }
