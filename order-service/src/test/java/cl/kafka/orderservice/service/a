@@ -1,0 +1,28 @@
+    @Test
+    void shouldPublishCreatedOrder() {
+        // Arrange
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-123",
+                "product-456",
+                2,
+                new BigDecimal("19990")
+        );
+
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+
+        // Act
+        orderService.createOrder(request);
+
+        // Assert
+        InOrder inOrder = inOrder(
+                orderRepository,
+                orderEventPublisher
+        );
+
+        inOrder.verify(orderRepository).save(orderCaptor.capture());
+
+        Order savedOrder = orderCaptor.getValue();
+
+        inOrder.verify(orderEventPublisher).publishOrderCreated(savedOrder);
+
+    }
