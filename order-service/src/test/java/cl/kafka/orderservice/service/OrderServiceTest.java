@@ -2,6 +2,7 @@ package cl.kafka.orderservice.service;
 
 import cl.kafka.orderservice.dto.CreateOrderRequest;
 import cl.kafka.orderservice.event.OrderCreatedEvent;
+import cl.kafka.orderservice.event.OrderPaidEvent;
 import cl.kafka.orderservice.exception.OrderNotFoundException;
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
@@ -282,6 +283,60 @@ public class OrderServiceTest {
                 savedOrder.unitPrice()
         );
 
+        assertEquals(expectedEvent, publishedEvent);
+    }
+
+    @Test
+    void payOrderShouldSavePaidOrderAndPublishOrderPaidEvent() {
+        // Arrange
+        String orderId = "order-123";
+
+        Order storedOrder = new Order(
+                orderId,
+                "customer-123",
+                "product-123",
+                1,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
+        ArgumentCaptor<Order> paidOrderCaptor =
+                ArgumentCaptor.forClass(Order.class);
+
+        ArgumentCaptor<OrderPaidEvent> eventCaptor =
+                ArgumentCaptor.forClass(OrderPaidEvent.class);
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(storedOrder));
+
+        // Act
+        orderService.payOrder(orderId);
+
+        // Assert
+        InOrder inOrder = inOrder(
+                orderRepository,
+                orderEventPublisher
+        );
+
+        inOrder.verify(orderRepository)
+                .save(paidOrderCaptor.capture());
+
+        Order paidOrder = paidOrderCaptor.getValue();
+
+        inOrder.verify(orderEventPublisher)
+                .publishOrderPaid(eventCaptor.capture());
+
+        OrderPaidEvent publishedEvent = eventCaptor.getValue();
+
+        OrderPaidEvent expectedEvent = new OrderPaidEvent(
+                paidOrder.id(),
+                paidOrder.customerId(),
+                paidOrder.productId(),
+                paidOrder.quantity(),
+                paidOrder.unitPrice()
+        );
+
+        assertEquals(OrderStatus.PAID, paidOrder.status());
         assertEquals(expectedEvent, publishedEvent);
     }
 

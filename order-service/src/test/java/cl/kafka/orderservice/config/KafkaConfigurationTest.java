@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verify;
 
 public class KafkaConfigurationTest {
 
-    private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate =
+    private final KafkaTemplate<String, Object> kafkaTemplate =
             mock(KafkaTemplate.class);
 
     private final ApplicationContextRunner contextRunner =
@@ -21,7 +21,8 @@ public class KafkaConfigurationTest {
                     .withUserConfiguration(KafkaConfiguration.class)
                     .withBean(KafkaTemplate.class, () -> { return kafkaTemplate; })
                     .withPropertyValues(
-                            "app.kafka.topics.order-created=orders.created"
+                            "app.kafka.topics.order.created=orders.created",
+                            "app.kafka.topics.order.paid=orders.paid"
                     );
 
     @Test
