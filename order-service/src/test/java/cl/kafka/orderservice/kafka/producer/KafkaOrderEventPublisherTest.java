@@ -1,5 +1,6 @@
 package cl.kafka.orderservice.kafka.producer;
 
+import cl.kafka.orderservice.config.OrderTopicsProperties;
 import cl.kafka.orderservice.event.OrderCreatedEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -14,15 +15,19 @@ public class KafkaOrderEventPublisherTest {
     @Test
     void shouldPublishOrderCreatedEventToConfiguredTopic() {
         // Arrange
-        KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate =
+        KafkaTemplate<String, Object> kafkaTemplate =
                 mock(KafkaTemplate.class);
 
-        String topicName = "orders.created";
+        OrderTopicsProperties orderTopicsProperties =
+                new OrderTopicsProperties(
+                        "orders.created",
+                        "orders.paid"
+                );
 
         KafkaOrderEventPublisher publisher =
                 new KafkaOrderEventPublisher(
                         kafkaTemplate,
-                        topicName
+                        orderTopicsProperties
                 );
 
         OrderCreatedEvent event = new OrderCreatedEvent(
@@ -38,7 +43,7 @@ public class KafkaOrderEventPublisherTest {
 
         // Assert
         verify(kafkaTemplate)
-                .send(topicName, event);
+                .send("orders.created", event);
     }
 
 }

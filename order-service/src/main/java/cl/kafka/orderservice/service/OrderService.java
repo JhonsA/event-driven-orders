@@ -2,6 +2,7 @@ package cl.kafka.orderservice.service;
 
 import cl.kafka.orderservice.dto.CreateOrderRequest;
 import cl.kafka.orderservice.event.OrderCreatedEvent;
+import cl.kafka.orderservice.event.OrderPaidEvent;
 import cl.kafka.orderservice.exception.OrderNotFoundException;
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
@@ -59,5 +60,13 @@ public class OrderService {
         Order order = findById(id);
         order.pay();
         orderRepository.save(order);
+        OrderPaidEvent orderPaidEvent = new OrderPaidEvent(
+                order.id(),
+                order.customerId(),
+                order.productId(),
+                order.quantity(),
+                order.unitPrice()
+        );
+        orderEventPublisher.publishOrderPaid(orderPaidEvent);
     }
 }
