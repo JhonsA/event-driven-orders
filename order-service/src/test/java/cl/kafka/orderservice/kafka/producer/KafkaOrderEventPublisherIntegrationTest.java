@@ -2,6 +2,7 @@ package cl.kafka.orderservice.kafka.producer;
 
 import cl.kafka.orderservice.event.OrderCreatedEvent;
 import cl.kafka.orderservice.port.out.OrderEventPublisher;
+import cl.kafka.orderservice.service.OrderService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -15,6 +16,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -28,6 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
         bootstrapServersProperty = "spring.kafka.bootstrap-servers"
 )
 class KafkaOrderEventPublisherIntegrationTest {
+
+    @MockitoBean
+    private OrderService orderService;
 
     @Autowired
     private OrderEventPublisher publisher;
