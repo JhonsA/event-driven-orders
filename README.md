@@ -74,11 +74,14 @@ Cada nueva funcionalidad sigue el mismo flujo de trabajo:
 
 Objetivo: completar el primer flujo vertical de la aplicación.
 
+- [ ] Diseño del contrato REST.
 - [ ] Adaptador REST.
+- [ ] Adaptador de persistencia.
 - [ ] Manejo global de excepciones HTTP.
+- [ ] PostgreSQL mediante Docker Compose.
 - [ ] Ejecución local del servicio.
 - [ ] Kafka mediante Docker Compose.
-- [ ] Flujo end-to-end (HTTP → Service → Kafka).
+- [ ] Flujo end-to-end (HTTP → Application → PostgreSQL → Kafka).
 
 ---
 
@@ -152,7 +155,15 @@ Actualmente el laboratorio cuenta con un `order-service` capaz de:
 - Aplicar TDD.
 - Contar con pruebas unitarias e integración.
 
-El siguiente objetivo es completar el flujo vertical del `order-service` mediante un adaptador REST y posteriormente incorporar un `notification-service` como consumidor de eventos.
+La siguiente etapa consiste en completar el primer flujo vertical del sistema incorporando:
+
+- Adaptador REST.
+- Adaptador de persistencia.
+- Persistencia en PostgreSQL.
+- Ejecución local del servicio.
+- Integración completa con Apache Kafka.
+
+Una vez finalizado este flujo, se incorporará un `notification-service` como primer consumidor de eventos.
 
 ---
 
