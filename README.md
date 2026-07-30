@@ -74,10 +74,10 @@ Cada nueva funcionalidad sigue el mismo flujo de trabajo:
 
 Objetivo: completar el primer flujo vertical de la aplicación.
 
-- [ ] Diseño del contrato REST.
-- [ ] Adaptador REST.
+- [x] Diseño del contrato REST.
+- [x] Adaptador REST.
 - [ ] Adaptador de persistencia.
-- [ ] Manejo global de excepciones HTTP.
+- [x] Manejo global de excepciones HTTP.
 - [ ] PostgreSQL mediante Docker Compose.
 - [ ] Ejecución local del servicio.
 - [ ] Kafka mediante Docker Compose.
