@@ -1,6 +1,7 @@
 package cl.kafka.orderservice.controller;
 
 import cl.kafka.orderservice.dto.CreateOrderRequest;
+import cl.kafka.orderservice.exception.InvalidOrderException;
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
 import cl.kafka.orderservice.service.OrderService;
@@ -69,6 +70,31 @@ public class OrderControllerTest {
                 .andExpect(jsonPath("$.quantity").value(2))
                 .andExpect(jsonPath("$.unitPrice").value(19990))
                 .andExpect(jsonPath("$.status").value("CREATED"));
+    }
+
+    @Test
+    void createOrderShouldReturnBadRequestWhenBusinessValidationFails() throws Exception {
+        // Arrange
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-123",
+                "product-456",
+                2,
+                new BigDecimal("19990")
+        );
+
+        when(orderService.createOrder(request))
+                .thenThrow(new InvalidOrderException("Customer ID must not be blank"));
+
+        // Act + Assert
+        mockMvc.perform(
+                        post("/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Customer ID must not be blank"));
     }
 
 }
