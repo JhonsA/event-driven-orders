@@ -1,14 +1,16 @@
 package cl.kafka.orderservice.kafka.producer;
 
+import cl.kafka.orderservice.config.KafkaConfiguration;
 import cl.kafka.orderservice.event.OrderCreatedEvent;
 import cl.kafka.orderservice.port.out.OrderEventPublisher;
-import cl.kafka.orderservice.service.OrderService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -16,23 +18,29 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest
+@SpringBootTest(
+        classes = {
+                KafkaAutoConfiguration.class,
+                KafkaConfiguration.class
+        },
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = {
+                "app.kafka.topics.order.created=orders.created",
+                "app.kafka.topics.order.paid=orders.paid"
+        }
+)
 @EmbeddedKafka(
         partitions = 1,
         topics = "orders.created",
         bootstrapServersProperty = "spring.kafka.bootstrap-servers"
 )
 class KafkaOrderEventPublisherIntegrationTest {
-
-    @MockitoBean
-    private OrderService orderService;
 
     @Autowired
     private OrderEventPublisher publisher;
@@ -66,6 +74,11 @@ class KafkaOrderEventPublisherIntegrationTest {
         );
     }
 
+    @AfterEach
+    void tearDown() {
+        consumer.close();
+    }
+
     @Test
     void shouldPublishOrderCreatedEvent() {
         OrderCreatedEvent event = new OrderCreatedEvent(
@@ -86,5 +99,4 @@ class KafkaOrderEventPublisherIntegrationTest {
 
         assertEquals(event, record.value());
     }
-
 }
