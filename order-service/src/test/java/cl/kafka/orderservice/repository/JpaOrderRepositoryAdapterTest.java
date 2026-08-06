@@ -4,6 +4,7 @@ import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.model.OrderStatus;
 import cl.kafka.orderservice.repository.entity.OrderEntity;
 import cl.kafka.orderservice.repository.jpa.SpringDataOrderRepository;
+import cl.kafka.orderservice.repository.mapper.OrderPersistenceMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -19,8 +20,11 @@ public class JpaOrderRepositoryAdapterTest {
     private final SpringDataOrderRepository springDataRepository =
             mock(SpringDataOrderRepository.class);
 
+    private final OrderPersistenceMapper orderPersistenceMapper =
+            mock(OrderPersistenceMapper.class);
+
     private final JpaOrderRepositoryAdapter adapter =
-            new JpaOrderRepositoryAdapter(springDataRepository);
+            new JpaOrderRepositoryAdapter(springDataRepository, orderPersistenceMapper);
 
     @Test
     void saveShouldMapOrderAndDelegateToSpringDataRepository() {
@@ -34,25 +38,27 @@ public class JpaOrderRepositoryAdapterTest {
                 OrderStatus.CREATED
         );
 
-        ArgumentCaptor<OrderEntity> entityCaptor =
-                ArgumentCaptor.forClass(OrderEntity.class);
+        OrderEntity entity = new OrderEntity(
+                "order-123",
+                "customer-123",
+                "product-456",
+                2,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
+        when(orderPersistenceMapper.toEntity(order))
+                .thenReturn(entity);
 
         // Act
         adapter.save(order);
 
         // Assert
+        verify(orderPersistenceMapper)
+                .toEntity(order);
+
         verify(springDataRepository)
-                .save(entityCaptor.capture());
-
-        OrderEntity savedEntity = entityCaptor.getValue();
-
-        // Assertions
-        assertEquals(order.id(), savedEntity.getId());
-        assertEquals(order.customerId(), savedEntity.getCustomerId());
-        assertEquals(order.productId(), savedEntity.getProductId());
-        assertEquals(order.quantity(), savedEntity.getQuantity());
-        assertEquals(order.unitPrice(), savedEntity.getUnitPrice());
-        assertEquals(order.status(), savedEntity.getStatus());
+                .save(entity);
     }
 
     @Test
@@ -69,8 +75,20 @@ public class JpaOrderRepositoryAdapterTest {
                 OrderStatus.CREATED
         );
 
+        Order mappedOrder = new Order(
+                orderId,
+                "customer-123",
+                "product-456",
+                2,
+                new BigDecimal("19990"),
+                OrderStatus.CREATED
+        );
+
         when(springDataRepository.findById(orderId))
                 .thenReturn(Optional.of(entity));
+
+        when(orderPersistenceMapper.toDomain(entity))
+                .thenReturn(mappedOrder);
 
         // Act
         Optional<Order> result = adapter.findById(orderId);
@@ -79,16 +97,10 @@ public class JpaOrderRepositoryAdapterTest {
         verify(springDataRepository)
                 .findById(orderId);
 
-        assertTrue(result.isPresent());
+        verify(orderPersistenceMapper)
+                .toDomain(entity);
 
-        Order order = result.get();
-
-        assertEquals(entity.getId(), order.id());
-        assertEquals(entity.getCustomerId(), order.customerId());
-        assertEquals(entity.getProductId(), order.productId());
-        assertEquals(entity.getQuantity(), order.quantity());
-        assertEquals(entity.getUnitPrice(), order.unitPrice());
-        assertEquals(entity.getStatus(), order.status());
+        assertEquals(Optional.of(mappedOrder), result);
     }
 
 }

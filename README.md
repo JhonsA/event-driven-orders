@@ -78,7 +78,7 @@ Objetivo: completar el primer flujo vertical de la aplicación.
 - [x] Adaptador REST.
 - [ ] Adaptador de persistencia.
 - [x] Manejo global de excepciones HTTP.
-- [ ] PostgreSQL mediante Docker Compose.
+- [x] PostgreSQL mediante Docker Compose.
 - [ ] Ejecución local del servicio.
 - [ ] Kafka mediante Docker Compose.
 - [ ] Flujo end-to-end (HTTP → Application → PostgreSQL → Kafka).
