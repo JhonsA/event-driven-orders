@@ -2,43 +2,29 @@ package cl.kafka.orderservice.repository;
 
 import cl.kafka.orderservice.model.Order;
 import cl.kafka.orderservice.port.out.OrderRepository;
-import cl.kafka.orderservice.repository.entity.OrderEntity;
 import cl.kafka.orderservice.repository.jpa.SpringDataOrderRepository;
+import cl.kafka.orderservice.repository.mapper.OrderPersistenceMapper;
 
 import java.util.Optional;
 
 public class JpaOrderRepositoryAdapter implements OrderRepository {
 
     private final SpringDataOrderRepository springDataRepository;
+    private final OrderPersistenceMapper mapper;
 
-    public JpaOrderRepositoryAdapter(SpringDataOrderRepository springDataRepository) {
+    public JpaOrderRepositoryAdapter(SpringDataOrderRepository springDataRepository, OrderPersistenceMapper mapper) {
         this.springDataRepository = springDataRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public void save(Order order) {
-        OrderEntity entity = new OrderEntity(
-                order.id(),
-                order.customerId(),
-                order.productId(),
-                order.quantity(),
-                order.unitPrice(),
-                order.status()
-        );
-
-        springDataRepository.save(entity);
+        springDataRepository.save(mapper.toEntity(order));
     }
 
     @Override
     public Optional<Order> findById(String id) {
         return springDataRepository.findById(id)
-                .map(entity -> new Order(
-                        entity.getId(),
-                        entity.getCustomerId(),
-                        entity.getProductId(),
-                        entity.getQuantity(),
-                        entity.getUnitPrice(),
-                        entity.getStatus()
-                ));
+                .map(mapper::toDomain);
     }
 }
